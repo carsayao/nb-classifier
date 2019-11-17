@@ -18,3 +18,10 @@ if arg == 'sum_array':
     col_to_sum = a[:, [3]]
     print(np.sum(col_to_sum))
     # np.sum(a, axis=1)
+if arg=='std':
+    a = np.array([[1,2,3,0],
+                  [1,2,3,1],
+                  [1,2,3,0]])
+    print(a)
+    a = np.vstack((a, [1,2,3,4]))
+    print(a)

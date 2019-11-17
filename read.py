@@ -11,30 +11,40 @@ class read:
         self.SAMPLES_TEST = samples_test
         self.path = os.path.dirname(os.path.realpath(__file__))
         self.data_raw = self.path + "/spambase/rawdata/spambase.data"
-        self.data_dat = self.path + "/spambase/data.dat"
+        # self.data_dat = self.path + "/spambase/data.dat"
+        self.train_dat = self.path + "/spambase/train.dat"
+        self.test_dat = self.path + "/spambase/test.dat"
 
+    # Read raw data from spambase.data
+    # train_set.shape: (2301, 58)
+    # test_set.shape: (2300, 58)
     def read_raw(self):
         x = np.loadtxt(fname=self.data_raw, delimiter=',')
-        train_set = np.copy(x[:self.SAMPLES])
-        test_set = np.copy(x[self.SAMPLES:])
-        x_shuffled = np.copy(np.random.shuffle(x))
+        # Deep copy data and shuffle
+        x_shuffled = x.copy()
+        np.random.shuffle(x_shuffled)
+        # Split data into train and test sets
+        train_set = np.copy(x_shuffled[:self.SAMPLES])
+        test_set = np.copy(x_shuffled[self.SAMPLES:])
+        # Keep reshuffling until we get 2 balanced sets
         while self.check_balanced(train_set, test_set) == False:
-            x_shuffled = np.copy(np.random.shuffle(x))
-            train_set = np.copy(x[:self.SAMPLES])
-            test_set = np.copy(x[self.SAMPLES:])
-        # x_pos = np.sum(x[:, [57]])
-        # print(x_pos/4601)
-        print("x: ", x.shape)
-        # Split into 2 halves
-        #   train_set.shape: (2301, 58)
-        #   test_set.shape: (2300, 58)
+            # Shuffle
+            np.copy(np.random.shuffle(x_shuffled))
+            # Split into 2 halves
+            train_set = np.copy(x_shuffled[:self.SAMPLES])
+            test_set = np.copy(x_shuffled[self.SAMPLES:])
+        print(train_set.shape)
+        print(test_set.shape)
+        self.read_to_dat(train_set, test_set)
 
     # Make sure our split sets reflect statistics of full data set (+-~1%) 
     def check_balanced(self, x, y):
-        x_pos = np.sum(x[:, [57]]) / 2301
+        x_pos = np.sum(x[:, [57]])
         print(x_pos)
-        y_pos = np.sum(y[:, [57]]) / 2300
+        y_pos = np.sum(y[:, [57]])
         print(y_pos)
+        x_pos /= 2301
+        y_pos /= 2300
         if x_pos >= .404:
             print("if x_pos >= .404:")
             print("x_pos", x_pos)
@@ -53,8 +63,17 @@ class read:
             return False
         return True
 
-    # def read_to_dat(self):
-        
+    def read_to_dat(self, x, y):
+        # Create memmap pointer on disk and read into .dats
+        # Leave room for class attribute
+        fp0 = np.memmap(self.train_dat, dtype='float64',
+                        mode='w+', shape=(self.SAMPLES, self.INPUTS+1))
+        fp0[:] = x[:]
+        del fp0
+        fp1 = np.memmap(self.test_dat, dtype='float64',
+                        mode='w+', shape=(self.SAMPLES_TEST, self.INPUTS+1))
+        fp1[:] = y[:]
+        del fp1
 
 def main():
     inputs = 57
