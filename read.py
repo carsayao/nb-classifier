@@ -42,6 +42,7 @@ class Read:
             print(test_set.shape)
         return train_set, test_set
 
+    # TODO: do i need a separate shuffle function for train.py?
     # def shuffle(self):
 
     # Make sure our split sets reflect statistics of full data set (+-~1%) 

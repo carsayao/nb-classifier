@@ -72,6 +72,7 @@ class Classify:
         # Retain target to later determine error
         true_class = sample[self.INPUTS]
 
+        # TODO: track down runtime warns
         # Sliced up to 57 (so it doesn't include class)
         #   arr0: probability distribution that sample attribute is class 0
         #   arr1: probability distribution that sample attribute is class 1
