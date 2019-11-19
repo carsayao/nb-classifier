@@ -3,7 +3,8 @@ from read import Read
 import sys
 import os
 
-DEBUG = False
+# DEBUG = False
+DEBUG = True
 
 class Classify:
 
@@ -66,35 +67,34 @@ class Classify:
         self.train0_std  = np.where(self.train0_std==0,.0001,self.train0_std)
         self.train1_std  = np.where(self.train1_std==0,.0001,self.train1_std)
     
+    # Calculate probabilities
     def prob(self, sample):
-        # print(sample.shape)
-        # print("test_set[0][57]")
-        true_class = sample[57]
-        # print("class",sample[57])
-        # print("train_set[0]")
-        # print(self.train_set[0])
-        # print("train0_mean")
-        # print(self.train0_mean)
-        # print("train0_std")
-        # print(self.train0_std)
-
-        # arr0 = (1/(np.sqrt(2*np.pi)*self.train0_std))*np.exp(-1*(np.square(sample-self.train0_mean)/(2*np.square(self.train0_std))))
-        # arr1 = (1/(np.sqrt(2*np.pi)*self.train1_std))*np.exp(-1*(np.square(sample-self.train1_mean)/(2*np.square(self.train1_std))))
-
-        # prob0 = self.p0 + np.sum(arr0)
-        # prob1 = self.p1 + np.sum(arr1)
+        # Retain target to later determine error
+        true_class = sample[self.INPUTS]
 
         # Sliced up to 57 (so it doesn't include class)
-        arr0 = np.log((1/(np.sqrt(2*np.pi)*self.train0_std[:57]))*np.exp(-1*(np.square(sample[:57]-self.train0_mean[:57])/(2*np.square(self.train0_std[:57])))))
-        arr1 = np.log((1/(np.sqrt(2*np.pi)*self.train1_std[:57]))*np.exp(-1*(np.square(sample[:57]-self.train1_mean[:57])/(2*np.square(self.train1_std[:57])))))
+        #   arr0: probability distribution that sample attribute is class 0
+        #   arr1: probability distribution that sample attribute is class 1
+        arr0 = np.log((1/(np.sqrt(2*np.pi)*self.train0_std[:57]))
+                       *np.exp(-1*(np.square(sample[:57]-self.train0_mean[:57])
+                               /(2*np.square(self.train0_std[:57])))))
+        arr1 = np.log((1/(np.sqrt(2*np.pi)*self.train1_std[:57]))
+                       *np.exp(-1*(np.square(sample[:57]-self.train1_mean[:57])
+                               /(2*np.square(self.train1_std[:57])))))
 
+        # Classify with priors
+        #   prob0: probability sample is class 0
+        #   prob1: probability sample is class 1
         prob0 = np.log(self.p0) + np.sum(arr0)
         prob1 = np.log(self.p1) + np.sum(arr1)
 
+        # Determine class prediction and find error
+        # If argmax is prob0, our prediction was 0, else prediction was 1
         if max(prob0,prob1) == prob0:
             prediction = 0
         else:
             prediction = 1
+        # If error == 0, add 1 to our correctness
         if (true_class-prediction) == 0:
             self.correct += 1
 
@@ -106,7 +106,9 @@ class Classify:
             print("l",true_class-prediction)
             print()
 
+    # Nb classifier, acts like a wrapper
     def nb(self):
+        # Iterate through our test set and push it through our classifier
         for i in range(self.test_set.shape[0]):
             self.prob(self.test_set[i])
         print("correct",self.correct,self.correct/2300)
@@ -123,10 +125,21 @@ def main():
     samples = 2301
     samples_test = 2300
 
+    # Classifier class instance
     run = Classify(inputs, samples, samples_test)
+
+    # Data reading class instance
     read = Read(inputs, samples, samples_test)
+
+    # Read directly from spambase.data, shuffle,
+    #   and return train and test sets
     x, y = read.read_raw()
+
+    # Load our shuffled train and test sets into classify instance
     # run.load(x, y)
+
+    # Read two static, preshuffled arrays as our train and test sets
+    #   (for debugging)
     run.load_from_dat()
     p1, p0 = run.priors()
     print("P(1) = %s" % p1)

@@ -3,6 +3,7 @@ import sys
 import os
 
 DEBUG = False
+# DEBUG = True
 
 class Read:
 
@@ -42,7 +43,6 @@ class Read:
         return train_set, test_set
 
     # def shuffle(self):
-
 
     # Make sure our split sets reflect statistics of full data set (+-~1%) 
     def check_balanced(self, x, y):
