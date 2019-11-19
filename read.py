@@ -2,7 +2,9 @@ import numpy as np
 import sys
 import os
 
-class read:
+DEBUG = False
+
+class Read:
 
     def __init__(self, inputs, samples, samples_test):
         self.INPUTS = inputs
@@ -15,7 +17,7 @@ class read:
         self.train_dat = self.path + "/spambase/train.dat"
         self.test_dat = self.path + "/spambase/test.dat"
 
-    # Read raw data from spambase.data
+    # Read raw data from spambase.data, shuffle, return train and test sets
     # train_set.shape: (2301, 58)
     # test_set.shape: (2300, 58)
     def read_raw(self):
@@ -33,9 +35,14 @@ class read:
             # Split into 2 halves
             train_set = np.copy(x_shuffled[:self.SAMPLES])
             test_set = np.copy(x_shuffled[self.SAMPLES:])
-        print(train_set.shape)
-        print(test_set.shape)
-        self.read_to_dat(train_set, test_set)
+        # Check shapes
+        if DEBUG == True:
+            print(train_set.shape)
+            print(test_set.shape)
+        return train_set, test_set
+
+    # def shuffle(self):
+
 
     # Make sure our split sets reflect statistics of full data set (+-~1%) 
     def check_balanced(self, x, y):
@@ -75,13 +82,14 @@ class read:
         fp1[:] = y[:]
         del fp1
 
-def main():
-    inputs = 57
-    samples = 2301
-    samples_test = 2300
+# def main():
+#     inputs = 57
+#     samples = 2301
+#     samples_test = 2300
 
-    run = read(inputs, samples, samples_test)
-    run.read_raw()
+#     run = Read(inputs, samples, samples_test)
+#     x, y = run.read_raw()
+#     run.read_to_dat(train_set, test_set)
 
-if __name__ == "__main__":
-    main()
+# if __name__ == "__main__":
+#     main()

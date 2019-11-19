@@ -1,4 +1,4 @@
-spambase/
+# spambase/
 env/
 .vscode/
-
+__pycache__
