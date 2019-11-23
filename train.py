@@ -62,7 +62,7 @@ class Classify:
         # Remove 0's from std dev and replace with 0.0001
         self.train0_std  = np.where(self.train0_std==0,.0001,self.train0_std)
         self.train1_std  = np.where(self.train1_std==0,.0001,self.train1_std)
-    
+
     # Nb classifier, acts like a wrapper
     def nb(self):
         # Confusion matrix for our test set
