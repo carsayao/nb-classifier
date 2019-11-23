@@ -3,15 +3,15 @@ import sys
 import os
 
 DEBUG = False
-# DEBUG = True
 
 class Read:
 
-    def __init__(self, inputs, samples, samples_test):
+    def __init__(self, inputs, samples, samples_test, debug=False):
         self.INPUTS = inputs
         # Split samples into training and test set
         self.SAMPLES = samples
         self.SAMPLES_TEST = samples_test
+        DEBUG = debug
         self.path = os.path.dirname(os.path.realpath(__file__))
         self.data_raw = self.path + "/spambase/rawdata/spambase.data"
         # self.data_dat = self.path + "/spambase/data.dat"
@@ -48,27 +48,27 @@ class Read:
     # Make sure our split sets reflect statistics of full data set (+-~1%) 
     def check_balanced(self, x, y):
         x_pos = np.sum(x[:, [57]])
-        print(x_pos)
         y_pos = np.sum(y[:, [57]])
-        print(y_pos)
+        if DEBUG:
+            print("x_pos",x_pos)
+            print("y_pos",y_pos)
         x_pos /= 2301
         y_pos /= 2300
         if x_pos >= .404:
-            print("if x_pos >= .404:")
-            print("x_pos", x_pos)
+            print("x_pos was >= .404:", x_pos)
             return False
         if x_pos <= .384:
-            print("if x_pos <= .384:")
-            print("x_pos", x_pos)
+            print("x_pos was <= .384:", x_pos)
             return False
         if y_pos >= .404:
-            print("if y_pos >= .404:")
-            print("y_pos", y_pos)
+            print("y_pos was >= .404:", y_pos)
             return False
         if y_pos <= .384:
-            print("if y_pos <= .384:")
-            print("y_pos", y_pos)
+            print("y_pos was <= .384:", y_pos)
             return False
+        print("train set pos", x_pos)
+        print(" test set pos", y_pos)
+        print()
         return True
 
     def read_to_dat(self, x, y):

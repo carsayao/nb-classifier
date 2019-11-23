@@ -35,3 +35,23 @@ if arg=='name_array':
 if arg=='prob':
         # print((1/(np.sqrt(2*np.pi)*self.train0_std))*np.exp(-1*(np.square(sample-self.train0_mean)/np.square(2*self.train0_std))))
         print((1/(np.sqrt(2*np.pi)*1.8))*np.exp(-1*(np.square(5.2-4.8)/np.square(2*1.8))))
+
+if arg=='conf':
+    # n x m
+    #   n: actual
+    #   m: predicted
+    a = np.zeros((2,2))
+    print(a)
+    # a[0][1] += 1
+    a = np.array([[1,2],[3,4]])
+    print(a)
+    tp = a[1][1]
+    fp = a[0][1]
+    tn = a[0][0]
+    fn = a[1][0]
+    b = np.array([[tn,fp],[fn,tp]])
+    print(b)
+    print("tp",tp)
+    print("fp",fp)
+    print("tn",tn)
+    print("fn",fn)

@@ -2,9 +2,14 @@ import numpy as np
 from read import Read
 import sys
 import os
+import argparse
 
-# DEBUG = False
-DEBUG = True
+parser = argparse.ArgumentParser(description="Naive Bayes' Classifier")
+parser.add_argument('--debug', action='store_true',
+                    help="run with DEBUG flag set to True")
+args = parser.parse_args()
+args = vars(args)
+DEBUG = args["debug"]
 
 class Classify:
 
@@ -15,7 +20,9 @@ class Classify:
         self.SAMPLES_TEST = samples_test
         self.train_set = np.zeros((samples, inputs+1))
         self.test_set  = np.zeros((samples_test, inputs+1))
+        # Not spam
         self.p0 = 0
+        # Spam
         self.p1 = 0
         self.train0_mean = np.zeros(self.INPUTS+1)
         self.train1_mean = np.zeros(self.INPUTS+1)
@@ -40,7 +47,7 @@ class Classify:
     def priors(self):
         x_pos = np.sum(self.train_set[:,[self.INPUTS]])
         y_pos = np.sum(self.test_set[:,[self.INPUTS]])
-        print(x_pos+y_pos)
+        print("Number of spam",x_pos+y_pos)
         p1 = (x_pos+y_pos)/(self.SAMPLES+self.SAMPLES_TEST)
         self.p1 = p1
         p0 = 1-p1
@@ -68,9 +75,10 @@ class Classify:
         self.train1_std  = np.where(self.train1_std==0,.0001,self.train1_std)
     
     # Calculate probabilities
-    def prob(self, sample):
+    def prob(self, sample, confusion_matrix):
         # Retain target to later determine error
-        true_class = sample[self.INPUTS]
+        # Must turn to int to use as array index
+        actual = int(sample[self.INPUTS])
 
         # TODO: track down runtime warns
         # Sliced up to 57 (so it doesn't include class)
@@ -96,23 +104,27 @@ class Classify:
         else:
             prediction = 1
         # If error == 0, add 1 to our correctness
-        if (true_class-prediction) == 0:
+        if (actual-prediction) == 0:
             self.correct += 1
+        confusion_matrix[actual][prediction] += 1
+
 
         if DEBUG == True:
             print("prob0",prob0)
             print("prob1",prob1)
-            print("t",true_class)
+            print("t",actual)
             print("y", prediction)
-            print("l",true_class-prediction)
+            print("l",actual-prediction)
             print()
 
     # Nb classifier, acts like a wrapper
     def nb(self):
+        # Confusion matrix for our test set
+        confusion_matrix = np.zeros((2,2))
         # Iterate through our test set and push it through our classifier
         for i in range(self.test_set.shape[0]):
-            self.prob(self.test_set[i])
-        print("correct",self.correct,self.correct/2300)
+            self.prob(self.test_set[i], confusion_matrix)
+        self.derive_matrix(confusion_matrix)
 
         # Make sure we have the correct number of class 0 and 1
         if DEBUG == True:
@@ -120,6 +132,36 @@ class Classify:
             y_pos = np.sum(self.test_set[:,[self.INPUTS]])
             print(x_pos, y_pos)
             print("x_pos+y_pos",x_pos+y_pos)
+
+    # Derive accuracy, precision, and recall on test set
+    # Confusion matrix is formatted n x m where:
+    #   n: actual
+    #   m: predicted
+    def derive_matrix(self, confusion_matrix):
+        # Get our TP, FP, TN, FN
+        tp = confusion_matrix[1][1]
+        fp = confusion_matrix[0][1]
+        tn = confusion_matrix[0][0]
+        fn = confusion_matrix[1][0]
+        # Accuracy
+        accuracy = (tp+tn) / (tp+tn+fp+fn)
+        # Precision (positive prediction rate)
+        precision = tp / (tp+fp)
+        # Recall (sensitivity, or true positive rate)
+        recall = tp / (tp+fn)
+        print()
+        if DEBUG:
+            print("conf mat type",type(confusion_matrix))
+            print("correct",self.correct,self.correct/2300)
+            print("accuracy",accuracy)
+            print("precision",precision)
+            print("recall",recall)
+        else:
+            print("correct  ",round(self.correct/self.SAMPLES_TEST*100,4),self.correct)
+            print("accuracy ",round(accuracy*100,4))
+            print("precision",round(precision*100,4))
+            print("recall   ",round(recall*100,4))
+        print(confusion_matrix) 
 
 def main():
     inputs = 57
@@ -137,15 +179,17 @@ def main():
     x, y = read.read_raw()
 
     # Load our shuffled train and test sets into classify instance
-    # run.load(x, y)
+    run.load(x, y)
 
     # Read two static, preshuffled arrays as our train and test sets
     #   (for debugging)
-    run.load_from_dat()
+    # run.load_from_dat()
+
     p1, p0 = run.priors()
-    print("P(1) = %s" % p1)
-    print("P(0) = %s" % p0)
-    print("P(1) + P(0) = %s" % float(p1+p0))
+    if DEBUG:
+        print("P(1) = %s" % p1)
+        print("P(0) = %s" % p0)
+        print("P(1) + P(0) = %s" % float(p1+p0))
     run.mean_std()
     run.nb()
 
