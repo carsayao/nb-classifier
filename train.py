@@ -3,6 +3,8 @@ from read import Read
 import sys
 import os
 import argparse
+import warnings
+warnings.filterwarnings("error")
 
 parser = argparse.ArgumentParser(description="Naive Bayes' Classifier")
 parser.add_argument('--debug', action='store_true',
@@ -84,12 +86,26 @@ class Classify:
         # Sliced up to 57 (so it doesn't include class)
         #   arr0: probability distribution that sample attribute is class 0
         #   arr1: probability distribution that sample attribute is class 1
-        arr0 = np.log((1/(np.sqrt(2*np.pi)*self.train0_std[:57]))
-                       *np.exp(-1*(np.square(sample[:57]-self.train0_mean[:57])
-                               /(2*np.square(self.train0_std[:57])))))
-        arr1 = np.log((1/(np.sqrt(2*np.pi)*self.train1_std[:57]))
-                       *np.exp(-1*(np.square(sample[:57]-self.train1_mean[:57])
-                               /(2*np.square(self.train1_std[:57])))))
+
+        # arr0 = np.log((1/(np.sqrt(2*np.pi)*self.train0_std[:57]))
+        #                *np.exp(-1*(np.square(sample[:57]-self.train0_mean[:57])
+        #                        /(2*np.square(self.train0_std[:57])))))
+        # arr1 = np.log((1/(np.sqrt(2*np.pi)*self.train1_std[:57]))
+        #                *np.exp(-1*(np.square(sample[:57]-self.train1_mean[:57])
+        #                        /(2*np.square(self.train1_std[:57])))))
+
+        try:
+            arr0 = np.log((1/(np.sqrt(2*np.pi)*self.train0_std[:57]))
+                        *np.exp(-1*(np.square(sample[:57]-self.train0_mean[:57])
+                                /(2*np.square(self.train0_std[:57])))))
+            arr1 = np.log((1/(np.sqrt(2*np.pi)*self.train1_std[:57]))
+                        *np.exp(-1*(np.square(sample[:57]-self.train1_mean[:57])
+                                /(2*np.square(self.train1_std[:57])))))
+        except RuntimeWarning:
+            # import pdb; pdb.set_trace()
+            print('WARNING!')
+            print('train0_std',self.train0_std[:57])
+            print('train1_std',self.train1_std[:57])
 
         # Classify with priors
         #   prob0: probability sample is class 0
