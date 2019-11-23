@@ -4,6 +4,16 @@ import numpy as np
 from read import Read
 import sys
 import os
+import argparse
+# import warnings
+# warnings.filterwarnings("error")
+
+parser = argparse.ArgumentParser(description="Naive Bayes' Classifier")
+parser.add_argument('--debug', action='store_true',
+                    help="run with DEBUG flag set to True")
+args = parser.parse_args()
+args = vars(args)
+DEBUG = args["debug"]
 
 class Classify:
 
@@ -14,9 +24,9 @@ class Classify:
         self.SAMPLES_TEST = samples_test
         self.train_set = np.zeros((samples, inputs+1))
         self.test_set  = np.zeros((samples_test, inputs+1))
-        # P(~spam)
+        # Not spam
         self.p0 = 0
-        # P(spam)
+        # Spam
         self.p1 = 0
         # Mean and std dev of train set by class
         self.train0_mean = np.zeros(self.INPUTS+1)
@@ -32,6 +42,12 @@ class Classify:
         self.train_set = np.copy(x)
         self.test_set = np.copy(y)
 
+    def load_from_dat(self):
+        self.train_set = np.memmap(self.train_dat, dtype="float64", mode='r',
+                                   shape=(self.SAMPLES, self.INPUTS+1))
+        self.test_set  = np.memmap(self.test_dat, dtype="float64", mode='r',
+                                   shape=(self.SAMPLES_TEST, self.INPUTS+1))
+    
     # Calculate probability of classes where p0 is prob(~spam)
     def priors(self):
         # Sum class attributes of train and test sets
@@ -71,6 +87,12 @@ class Classify:
         for i in range(self.test_set.shape[0]):
             self.prob(self.test_set[i], confusion_matrix)
         self.derive_matrix(confusion_matrix)
+        # Make sure we have the correct number of class 0 and 1
+        if DEBUG == True:
+            x_pos = np.sum(self.train_set[:,[self.INPUTS]])
+            y_pos = np.sum(self.test_set[:,[self.INPUTS]])
+            print(x_pos, y_pos)
+            print("x_pos+y_pos",x_pos+y_pos)
 
     # Calculate probabilities
     def prob(self, sample, confusion_matrix):
@@ -78,6 +100,7 @@ class Classify:
         # Must turn to int to use as array index
         actual = int(sample[self.INPUTS])
 
+        # TODO: track down runtime warns
         # Sliced up to 57 (so it doesn't include class)
         #   arr0: probability distribution that sample attribute is class 0
         #   arr1: probability distribution that sample attribute is class 1
@@ -87,6 +110,19 @@ class Classify:
         arr1 = np.log((1/(np.sqrt(2*np.pi)*self.train1_std[:57]))
                        *np.exp(-1*(np.square(sample[:57]-self.train1_mean[:57])
                                /(2*np.square(self.train1_std[:57])))))
+
+        # try:
+        #     arr0 = np.log((1/(np.sqrt(2*np.pi)*self.train0_std[:57]))
+        #                 *np.exp(-1*(np.square(sample[:57]-self.train0_mean[:57])
+        #                         /(2*np.square(self.train0_std[:57])))))
+        #     arr1 = np.log((1/(np.sqrt(2*np.pi)*self.train1_std[:57]))
+        #                 *np.exp(-1*(np.square(sample[:57]-self.train1_mean[:57])
+        #                         /(2*np.square(self.train1_std[:57])))))
+        # except RuntimeWarning:
+        #     # import pdb; pdb.set_trace()
+        #     print('WARNING!')
+        #     print('train0_std',self.train0_std[:57])
+        #     print('train1_std',self.train1_std[:57])
 
         # Classify with priors
         #   prob0: probability sample is class 0
@@ -101,6 +137,14 @@ class Classify:
         else:
             prediction = 1
         confusion_matrix[actual][prediction] += 1
+
+        if DEBUG == True:
+            print("prob0",prob0)
+            print("prob1",prob1)
+            print("t",actual)
+            print("y", prediction)
+            print("l",actual-prediction)
+            print()
 
     # Derive accuracy, precision, and recall on test set
     # Confusion matrix is formatted n x m where:
@@ -119,6 +163,8 @@ class Classify:
         # Recall (sensitivity, or true positive rate)
         recall = tp / (tp+fn)
         print()
+        if DEBUG:
+            print("conf mat type",type(confusion_matrix))
         print(tp+tn,"correct")
         print(round(accuracy,4),"accuracy")
         print(round(precision,4),"precision")

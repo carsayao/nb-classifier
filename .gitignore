@@ -5,3 +5,5 @@ __pycache__
 *.code-workspace
 *~
 *.sw*
+_train.py
+_read.py
